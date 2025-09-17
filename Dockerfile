@@ -1,16 +1,35 @@
-se image
-FROM nginx:alpine
+# Stage 1: Build the Go binary
+FROM golang:1.22 AS builder
 
-# Set working directory to Nginx web root
-WORKDIR /usr/share/nginx/html
+WORKDIR /app
 
-# Copy your HTML files from build context
+# Copy go.mod and go.sum first (dependency caching)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the rest of the code
 COPY . .
 
-# Expose HTTP port
-EXPOSE 80
+# Build the Go binary (replace 'server' with your app name if needed)
+RUN go build -o server .
 
-# Nginx image already has the correct CMD
-# so no need to override, but just for clarity:
-CMD ["nginx", "-g", "daemon off;"]
+# Stage 2: Ubuntu-based runtime
+FROM ubuntu:22.04
+
+# Set working directory
+WORKDIR /app
+
+# Install minimal dependencies (like CA certificates)
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy the Go binary from builder
+COPY --from=builder /app/server .
+
+# Expose app port
+EXPOSE 8080
+
+# Run the app
+CMD ["./server"]
 
