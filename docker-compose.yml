@@ -12,16 +12,16 @@ services:
     ports:
       - "5432:5432"
     volumes:
-       - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
 
   app:
     build: .
     container_name: pharma
     restart: always
     depends_on:
-      - db      
+      - db
     ports:
-      - "8009:8080"
+      - "8002:8080"
     volumes:
       - Pharma:/app/data
     environment:
@@ -29,5 +29,9 @@ services:
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: healthcare    
+      DB_NAME: healthcare
+
+volumes:
+  db_data:
+  Pharma:
 
