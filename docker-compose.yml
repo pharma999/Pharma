@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+    db:
+      image: postgres:15
+      container_name: pharma-db
+      restart: always
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: healthcare
+     ports:
+      - "5432:5432"
+     volumes:
+       - db_data:/var/lib/postgresql/data 
+
+    app:
+      build: .            # <--- this tells Compose to use your Dockerfile
+      container_name: pharma
+      restart: always
+      depends_on:
+        - db
+      ports:
+        - "8002:8080"
+      volumes:
+       - Pharma:/app/data
+      environment:
+        DB_HOST: db
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        DB_NAME: healthcare
+ # add other env vars if needed
+    # volumes:
+   #   db_data:
+ #     Pharma:
+                                      #
+
