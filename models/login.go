@@ -15,9 +15,8 @@ func (loginPhone *LoginPhone) BeforeCreate(tx *gorm.DB) (err error) {
 	return nil
 }
 
-
 type VerifyOtp struct {
-	PhoneNumber    string    `json:"phone_number" gorm:"not null" binding:"required"`
-	VerificationId string    `json:"verification_id" gorm:"not null" binding:"required"`
-	Otp            string    `json:"otp" gorm:"not null" binding:"required"`
-}	
+	PhoneNumber    string `json:"phone_number" gorm:"not null" binding:"required"`
+	VerificationId string `json:"verification_id" gorm:"not null" binding:"required"`
+	Otp            string `json:"otp" gorm:"not null" binding:"required"`
+}

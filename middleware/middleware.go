@@ -23,7 +23,7 @@ type OTPData struct {
 
 func SendOTP(phoneNumber string) (*OTPData, error) {
 	url := fmt.Sprintf(
-		"https://cpaas.messagecentral.com/verification/v3/send?countryCode=91&customerId=C-7C9DA097870D4EC&flowType=SMS&mobileNumber=%s",
+		"https://cpaas.messagecentral.com/verification/v3/send?countryCode=91&customerId=C-79074004EB4443D&flowType=SMS&mobileNumber=%s",
 		phoneNumber,
 	)
 
@@ -34,7 +34,7 @@ func SendOTP(phoneNumber string) (*OTPData, error) {
 		return nil, err
 	}
 
-	req.Header.Add("authToken", "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLTdDOURBMDk3ODcwRDRFQyIsImlhdCI6MTc1Nzk3Mjc0NywiZXhwIjoxOTE1NjUyNzQ3fQ.AvnYUPJgFoI9ZdutvpFSDwXlugZXjgd_gvdQdyloLJXzuQrOeKuKFjgQ3N6HSS4K7gZ6CcRfv7P1LUZrG-9lXQ")
+	req.Header.Add("authToken", "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLTc5MDc0MDA0RUI0NDQzRCIsImlhdCI6MTc1ODE4MDI4OSwiZXhwIjoxOTE1ODYwMjg5fQ.UKvPC-soOGauLX7P2kIIXUCvO6UW-MZ3yzAgz6Qm5MLzqWpcujAOnjiNvb9ZHviZpYSYBN-wFWWWmx-3TcBdyQ")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
