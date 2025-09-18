@@ -16,8 +16,12 @@ RUN go build -o main .
 # ---- Final Minimal Image ----
 FROM ubuntu:22.04
 
-# Install CA certificates (important if your app makes HTTPS calls)
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install CA certificates and tzdata for time zones
+RUN apt-get update && \
+    apt-get install -y ca-certificates tzdata && \
+    ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -26,6 +30,9 @@ COPY --from=builder /app/main .
 
 # Copy .env file into image
 COPY .env .env
+
+# Set environment variable for time zone
+ENV TZ=Asia/Kolkata
 
 # Run the app
 CMD ["./main"]
