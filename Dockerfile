@@ -10,13 +10,13 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the Go binary
+# Build Go binary
 RUN go build -o main .
 
 # ---- Final Minimal Image ----
 FROM ubuntu:22.04
 
-# Install necessary packages: CA certs, tzdata, netcat
+# Install dependencies including netcat for wait-for-db.sh
 RUN apt-get update && \
     apt-get install -y ca-certificates tzdata netcat-openbsd && \
     ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
@@ -25,17 +25,18 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binary and wait script
 COPY --from=builder /app/main .
-
-# Copy .env file
-COPY .env .env
-
-# Copy wait-for-db script
 COPY wait-for-db.sh .
 
-# Set environment variable for time zone
+# Copy environment file
+COPY .env .env
+
+# Set time zone
 ENV TZ=Asia/Kolkata
 
-# Run the app via wait-for-db
+# Make script executable
+RUN chmod +x wait-for-db.sh
+
+# Start the app using wait-for-db
 CMD ["sh", "wait-for-db.sh"]
