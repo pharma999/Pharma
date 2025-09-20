@@ -18,7 +18,7 @@ FROM ubuntu:22.04
 
 # Install CA certificates and tzdata for time zones
 RUN apt-get update && \
-    apt-get install -y ca-certificates tzdata && \
+    apt-get install -y ca-certificates tzdata netcat-openbsd && \
     ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
