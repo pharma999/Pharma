@@ -35,5 +35,7 @@ COPY .env .env
 ENV TZ=Asia/Kolkata
 
 # Run the app
-CMD ["./main"]
+COPY wait-for-db.sh .
+CMD ["sh", "wait-for-db.sh"]
+
 
