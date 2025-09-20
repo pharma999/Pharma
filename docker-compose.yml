@@ -13,6 +13,8 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - pharma-net
 
   app:
     build: .
@@ -22,22 +24,19 @@ services:
       - db
     ports:
       - "8002:8080"
-    volumes:
-      - Pharma:/app/data
     environment:
-      DB_HOST: db
+      DB_HOST: db        # Service name
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: healthcare
     networks:
-      - pharma-net  
+      - pharma-net
+    command: ["sh", "wait-for-db.sh"]
 
 volumes:
   db_data:
-  Pharma:
 
 networks:
   pharma-net:
     driver: bridge
-
