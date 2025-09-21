@@ -1,18 +1,26 @@
 #!/bin/sh
 
+# wait-for-db.sh
+
 set -e
 
-echo "Waiting for database at $DB_CONN ..."
+host="pharma-db"
+port=5432
 
-# Extract host and port from DB_CONN for the health check
-DB_HOST=$(echo $DB_CONN | sed -n 's/.*host=\([^ ]*\).*/\1/p')
-DB_PORT=$(echo $DB_CONN | sed -n 's/.*port=\([^ ]*\).*/\1/p')
+echo "⏳ Waiting for database to be ready at $host:$port..."
 
-until nc -z "$DB_HOST" "$DB_PORT"; do
+# Wait until PostgreSQL is ready
+while ! nc -z "$host" "$port"; do
   echo "Database not ready - waiting..."
   sleep 2
 done
 
-echo "Database is up - starting app!"
-# Start your application (adjust the binary name if needed)
-exec ./pharma
+echo "✅ Database is up!"
+
+# Debug: Print the DB_CONN string
+echo "🔎 DB_CONN string:"
+echo "$DB_CONN"
+
+# Start the app
+echo "🚀 Starting the app..."
+exec sh -c "./main"
