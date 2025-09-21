@@ -1,12 +1,18 @@
-# Build stage
+# Stage 1: Build Go binary for Linux
 FROM golang:1.23.4 AS builder
 WORKDIR /app
+
+# Copy Go modules and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN go build -o pharma .
 
-# Final stage
+# Copy all source code
+COPY . .
+
+# Build binary for Linux
+RUN GOOS=linux GOARCH=amd64 go build -o main .
+
+# Stage 2: Final runtime image
 FROM ubuntu:22.04
 RUN apt-get update && \
     apt-get install -y ca-certificates tzdata netcat-openbsd && \
@@ -16,17 +22,12 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=builder /app/pharma .
-
-# Copy wait-for-db script
+# Copy binary and wait script from builder
+COPY --from=builder /app/main .
 COPY wait-for-db.sh .
-RUN chmod +x wait-for-db.sh
 
-# Copy env file (if needed)
-COPY .env .env
+# Make them executable
+RUN chmod +x main wait-for-db.sh
 
-ENV TZ=Asia/Kolkata
-
-# Start with wait-for-db.sh
+# Run wait script
 CMD ["sh", "wait-for-db.sh"]
