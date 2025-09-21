@@ -1,22 +1,13 @@
-# ---- Build Stage ----
+# Build stage
 FROM golang:1.23.4 AS builder
-
 WORKDIR /app
-
-# Download Go dependencies
 COPY go.mod go.sum ./
 RUN go mod download
-
-# Copy source code
 COPY . .
+RUN go build -o pharma .
 
-# Build Go binary
-RUN go build -o main .
-
-# ---- Final Minimal Image ----
+# Final stage
 FROM ubuntu:22.04
-
-# Install dependencies including netcat for wait-for-db.sh
 RUN apt-get update && \
     apt-get install -y ca-certificates tzdata netcat-openbsd && \
     ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
@@ -25,18 +16,17 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy binary and wait script
-COPY --from=builder /app/main .
+# Copy binary from builder
+COPY --from=builder /app/pharma .
+
+# Copy wait-for-db script
 COPY wait-for-db.sh .
-
-# Copy environment file
-COPY .env .env
-
-# Set time zone
-ENV TZ=Asia/Kolkata
-
-# Make script executable
 RUN chmod +x wait-for-db.sh
 
-# Start the app using wait-for-db
+# Copy env file (if needed)
+COPY .env .env
+
+ENV TZ=Asia/Kolkata
+
+# Start with wait-for-db.sh
 CMD ["sh", "wait-for-db.sh"]
