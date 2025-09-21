@@ -1,17 +1,18 @@
 #!/bin/sh
+
 set -e
 
-# Default values if env variables are missing
-DB_HOST=${DB_HOST:-db}
-DB_PORT=${DB_PORT:-5432}
+echo "Waiting for database at $DB_CONN ..."
 
-echo "Waiting for database at $DB_HOST:$DB_PORT..."
+# Extract host and port from DB_CONN for the health check
+DB_HOST=$(echo $DB_CONN | sed -n 's/.*host=\([^ ]*\).*/\1/p')
+DB_PORT=$(echo $DB_CONN | sed -n 's/.*port=\([^ ]*\).*/\1/p')
 
-# Loop until database port is open
-while ! nc -z "$DB_HOST" "$DB_PORT"; do
+until nc -z "$DB_HOST" "$DB_PORT"; do
   echo "Database not ready - waiting..."
   sleep 2
 done
 
 echo "Database is up - starting app!"
-exec ./main
+# Start your application (adjust the binary name if needed)
+exec ./pharma
