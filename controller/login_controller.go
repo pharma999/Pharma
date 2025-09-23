@@ -5,10 +5,7 @@ import (
 	"demo/helper"
 	"demo/middleware"
 	"demo/models"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -74,83 +71,50 @@ func LoginUser(c *gin.Context) {
 	helper.ErrorResponce(c, "Invalid phone number or failed to send OTP")
 }
 
+// Verify OTP Function
 func VerifyOTP(c *gin.Context) {
-	fmt.Println("VerifyOTP called")
 	var otpVerification models.VerifyOtp
+	var loginPhone models.LoginPhone
 	if err := c.ShouldBindJSON(&otpVerification); err != nil {
 		helper.ErrorResponce(c, "Invalid Input")
 		return
 	}
-
-	apiURL := fmt.Sprintf(
-		"https://cpaas.messagecentral.com/verification/v3/validateOtp?countryCode=91&mobileNumber=%s&verificationId=%s&customerId=%s&code=%s",
-		otpVerification.PhoneNumber, otpVerification.VerificationId, "C-79074004EB4443D", otpVerification.Otp,
-	)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", apiURL, nil)
+	resp, err := middleware.VerifyOTP(otpVerification.PhoneNumber, otpVerification.VerificationId, otpVerification.Otp)
 	if err != nil {
-		helper.ErrorResponce(c, "Failed to create request")
+		helper.ErrorResponce(c, "Failed to verify OTP: "+err.Error())
 		return
 	}
 
-	// Add auth token header
-	req.Header.Add("authToken", "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLTc5MDc0MDA0RUI0NDQzRCIsImlhdCI6MTc1ODE4MDI4OSwiZXhwIjoxOTE1ODYwMjg5fQ.UKvPC-soOGauLX7P2kIIXUCvO6UW-MZ3yzAgz6Qm5MLzqWpcujAOnjiNvb9ZHviZpYSYBN-wFWWWmx-3TcBdyQ")
+	if resp.ResponseCode == 200 &&
+		resp.Message == "SUCCESS" &&
+		resp.Data.VerificationStatus == "VERIFICATION_COMPLETED" {
 
-	resp, err := client.Do(req)
-	if err != nil {
-		helper.ErrorResponce(c, "Failed to call OTP API: "+err.Error())
-		return
-	}
-	defer resp.Body.Close()
+		// do IsLogin true in db
+		// if err := database.DB.Model(&loginPhone).Where("phone_number = ?", otpVerification.PhoneNumber).Update("is_login", true).Error; err != nil {
+		// 	helper.ErrorResponce(c, "Failed to update login status: "+err.Error())
+		// 	return
+		// }
+		if err := database.DB.Model(&loginPhone).
+			Where("phone_number = ?", otpVerification.PhoneNumber).
+			Update("is_login", true).Error; err != nil {
+			helper.ErrorResponce(c, "Failed to update login status: "+err.Error())
+			return
+		}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		helper.ErrorResponce(c, "Failed to read API response")
-		return
-	}
-
-	fmt.Printf("OTP API Status: %d\n", resp.StatusCode)
-	fmt.Printf("OTP API Raw Response: %s\n", string(body))
-
-	// Check if response is valid JSON
-	if !json.Valid(body) {
-		helper.ErrorResponce(c, fmt.Sprintf("OTP API returned non-JSON response: %s", string(body)))
-		return
-	}
-
-	// Use a struct that matches the actual API response
-	var verifyResponse struct {
-		ResponseCode int    `json:"responseCode"`
-		Message      string `json:"message"`
-		Data         struct {
-			VerificationID     int     `json:"verificationId"`
-			MobileNumber       string  `json:"mobileNumber"`
-			VerificationStatus string  `json:"verificationStatus"`
-			ResponseCode       string  `json:"responseCode"`
-			ErrorMessage       *string `json:"errorMessage"`
-			TransactionID      string  `json:"transactionId"`
-			AuthToken          *string `json:"authToken"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(body, &verifyResponse); err != nil {
-		helper.ErrorResponce(c, fmt.Sprintf("Failed to parse API JSON: %s", string(body)))
-		return
-	}
-
-	// Check all required conditions
-	if verifyResponse.ResponseCode == 200 &&
-		verifyResponse.Message == "SUCCESS" &&
-		verifyResponse.Data.VerificationStatus == "VERIFICATION_COMPLETED" &&
-		fmt.Sprintf("%d", verifyResponse.Data.VerificationID) == otpVerification.VerificationId {
-
+		// Generate JWT Token
+		token, err := helper.GenerateJWT(otpVerification.PhoneNumber)
+		if err != nil {
+			helper.ErrorResponce(c, "Failed to generate token: "+err.Error())
+			return
+		}
 		helper.SucessResponse(c, gin.H{
 			"message":            "OTP verified successfully",
 			"phone_number":       otpVerification.PhoneNumber,
-			"verificationStatus": verifyResponse.Data.VerificationStatus,
-			"verificationId":     verifyResponse.Data.VerificationID,
+			"verificationStatus": resp.Data.VerificationStatus,
+			"verificationId":     resp.Data.VerificationID,
+			"token":              token,
 		})
 		return
 	}
-
-	helper.ErrorResponce(c, fmt.Sprintf("Invalid OTP or verification failed: %s", verifyResponse.Message))
+	helper.ErrorResponce(c, "Invalid OTP or verification failed")
 }

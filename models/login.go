@@ -8,6 +8,7 @@ import (
 type LoginPhone struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
 	PhoneNumber string    `json:"phone_number" gorm:"not null" binding:"required"`
+	IsLogin     bool      `json:"is_login" gorm:"default:false"`
 }
 
 func (loginPhone *LoginPhone) BeforeCreate(tx *gorm.DB) (err error) {

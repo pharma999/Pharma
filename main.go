@@ -11,8 +11,10 @@ import (
 
 func main() {
 	fmt.Println("Welcome to the demo api...")
-
+	// Connect to the Postgres database
 	database.ConnectDB()
+	// Connect to the MongoDB database
+	database.ConnectMongoDB()
 	// Setup router
 	r := gin.Default()
 	routes.SetupRouter(r)

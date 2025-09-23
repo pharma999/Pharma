@@ -24,6 +24,21 @@ func CreateUser(c *gin.Context) {
 	helper.SucessResponse(c, user)
 }
 
+func CreateUserMongo(c *gin.Context) {
+	var user models.User
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		helper.ErrorResponce(c, "Invalid Input")
+		return
+	}
+	collection := database.MongoDB.Collection("users")
+	if _, err := collection.InsertOne(c, user); err != nil {
+		helper.ErrorResponce(c, err.Error())
+		return
+	}
+	helper.SucessResponse(c, user)
+}
+
 func GetUsers(c *gin.Context) {
 	var users []models.User
 	if result := database.DB.Find(&users); result.Error != nil {
