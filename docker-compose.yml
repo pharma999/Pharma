@@ -16,12 +16,25 @@ services:
     networks:
       - pharma-net
 
+ mongo:
+    image: mongo:6
+    container_name: pharma-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pharma-net
+      
+
   app:
     build: .
     container_name: pharma
     restart: always
     depends_on:
       - db
+      - mongo
     ports:
       - "8002:8080"
     environment:
@@ -32,6 +45,7 @@ services:
 
 volumes:
   db_data:
+   mongo_data:
 
 networks:
   pharma-net:
