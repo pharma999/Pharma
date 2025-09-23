@@ -1,39 +1,33 @@
-# ---- Build Stage ----
+# Stage 1: Build Go binary for Linux
 FROM golang:1.23.4 AS builder
-
 WORKDIR /app
 
-# Download Go dependencies
+# Copy Go modules and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Build the Go binary
-RUN go build -o main .
+# Build binary for Linux
+RUN GOOS=linux GOARCH=amd64 go build -o main .
 
-# ---- Final Minimal Image ----
+# Stage 2: Final runtime image
 FROM ubuntu:22.04
-
-# Install CA certificates and tzdata for time zones
 RUN apt-get update && \
-    apt-get install -y ca-certificates tzdata && \
+    apt-get install -y ca-certificates tzdata netcat-openbsd && \
     ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binary and wait script from builder
 COPY --from=builder /app/main .
+COPY wait-for-db.sh .
 
-# Copy .env file into image
-COPY .env .env
+# Make them executable
+RUN chmod +x main wait-for-db.sh
 
-# Set environment variable for time zone
-ENV TZ=Asia/Kolkata
-
-# Run the app
-CMD ["./main"]
-
+# Run wait script
+CMD ["sh", "wait-for-db.sh"]
