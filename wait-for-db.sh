@@ -1,16 +1,16 @@
 #!/bin/sh
 
 # Default values if environment variables are not set
-DB_HOST=${DB_HOST:-db}
-DB_PORT=${DB_PORT:-5432}
-DB_USER=${DB_USER:-postgres}
-DB_PASSWORD=${DB_PASSWORD:-postgres}
-DB_NAME=${DB_NAME:-healthcare}
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT}
+DB_USER=${DB_USER}
+DB_PASSWORD=${DB_PASSWORD}
+DB_NAME=${DB_NAME}
 
 # MongoDB defaults
-MONGO_HOST=${MONGO_HOST:-mongo}
-MONGO_PORT=${MONGO_PORT:-27017}
-MONGO_DBNAME=${MONGO_DBNAME:-healthcare}
+MONGO_HOST=${MONGO_HOST}
+MONGO_PORT=${MONGO_PORT}
+MONGO_DBNAME=${MONGO_DBNAME}
 
 
 # Construct connection string
