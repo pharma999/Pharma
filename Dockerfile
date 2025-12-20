@@ -19,7 +19,10 @@ RUN apt-get update && \
 
 WORKDIR /app
 
+# Copy binary
 COPY --from=builder /app/main .
 
-# Start Go application directly
+COPY .env .
+
+# Start application
 CMD ["./main"]
