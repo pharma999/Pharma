@@ -24,5 +24,9 @@ COPY --from=builder /app/main .
 
 COPY .env .
 
+COPY wait-for-db.sh .
+RUN chmod +x /app/wait-for-db.sh
+CMD ["/app/wait-for-db.sh"]
+
 # Start application
 CMD ["./main"]
