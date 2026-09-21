@@ -16,7 +16,7 @@ services:
     networks:
       - pharma-net
 
- mongo:
+  mongo:
     image: mongo:6
     container_name: pharma-mongo
     restart: always
@@ -26,7 +26,6 @@ services:
       - mongo_data:/data/db
     networks:
       - pharma-net
-      
 
   app:
     build: .
@@ -38,14 +37,16 @@ services:
     ports:
       - "8002:8080"
     environment:
+      DB_HOST: pharma-db
+      DB_PORT: "5432"
       DB_CONN: "host=pharma-db user=postgres password=postgres dbname=healthcare port=5432 sslmode=disable TimeZone=Asia/Kolkata"
     networks:
       - pharma-net
-    command: ["sh", "wait-for-db.sh"]
+    command: ["bash", "/app/wait-for-db.sh"]
 
 volumes:
   db_data:
-   mongo_data:
+  mongo_data:
 
 networks:
   pharma-net:

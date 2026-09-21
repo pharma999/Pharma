@@ -1,39 +1,32 @@
-# #!/bin/sh
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-# # Default values if environment variables are not set
-# DB_HOST=${DB_HOST}
-# DB_PORT=${DB_PORT}
-# DB_USER=${DB_USER}
-# DB_PASSWORD=${DB_PASSWORD}
-# DB_NAME=${DB_NAME}
+# Wait for a TCP service before starting the application.
+# Override these values through the container environment when needed.
+DB_HOST="${DB_HOST:-pharma-db}"
+DB_PORT="${DB_PORT:-5432}"
+DB_TIMEOUT="${DB_TIMEOUT:-60}"
 
-# # MongoDB defaults
-# MONGO_HOST=${MONGO_HOST}
-# MONGO_PORT=${MONGO_PORT}
-# MONGO_DBNAME=${MONGO_DBNAME}
+wait_for_service() {
+  local host="$1"
+  local port="$2"
+  local name="$3"
+  local deadline=$((SECONDS + DB_TIMEOUT))
 
+  echo "Waiting for ${name} at ${host}:${port}..."
+  while ! (echo >"/dev/tcp/${host}/${port}") >/dev/null 2>&1; do
+    if (( SECONDS >= deadline )); then
+      echo "Timed out after ${DB_TIMEOUT}s waiting for ${name} at ${host}:${port}" >&2
+      exit 1
+    fi
+    sleep 2
+  done
+  echo "${name} is ready."
+}
 
-# # Construct connection string
-# DB_CONN="host=${DB_HOST} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} port=${DB_PORT} sslmode=disable TimeZone=Asia/Kolkata"
+wait_for_service "$DB_HOST" "$DB_PORT" "PostgreSQL"
 
-# echo "⏳ Waiting for database to be ready at ${DB_HOST}:${DB_PORT}..."
+# Replace this with the MongoDB health check if MongoDB is required before startup:
+# wait_for_service "${MONGO_HOST:-mongo}" "${MONGO_PORT:-27017}" "MongoDB"
 
-# # Wait until the database is accepting connections
-# while ! nc -z ${DB_HOST} ${DB_PORT}; do
-#   sleep 2
-#   echo "Database not ready - waiting..."
-# done
-
-# echo "✅ Database is up!"
-# echo "🔎 DB_CONN string: $DB_CONN"
-
-# echo "⏳ Waiting for MongoDB at ${MONGO_HOST}:${MONGO_PORT}..."
-# while ! nc -z ${MONGO_HOST} ${MONGO_PORT}; do
-#   sleep 2
-#   echo "MongoDB not ready - waiting..."
-# done
-# echo "✅ MongoDB is up!"
-# echo "🔎 Mongo connection: mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DBNAME}"
-
-# # Run the Go application
-# exec /app/main
+exec /app/main "$@"
